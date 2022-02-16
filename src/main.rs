@@ -41,7 +41,6 @@ async fn main() {
     let mut td = TransactionsDispatcher::new();
     let transactions = get_transactions(&get_params());
     for i in 0..transactions.len() {
-        println!("i={}",&i);
         match td.process_transactions(&transactions[i.clone()]).await{
             Err(err) => println!("During processing transaction {:?} error occured:\n {} ",transactions[i],err),
             _=> ()

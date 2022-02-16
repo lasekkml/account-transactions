@@ -103,8 +103,10 @@ impl TransactionsDispatcher {
 
 /// Processing transaction with client account
     pub async fn process_transactions(&mut self, transaction: &Transaction) -> Result<(), Error> {
-        println!("processing: {:?}",&transaction);
         let pos = self.get_client_index(transaction.client);
+        if self.clients[pos].locked {
+            return Err(Error::Other("Client is already locked".to_string()));
+        }
         self.history.push(transaction.clone());
         match transaction.tt{
             TransactionT::Deposit => self.clients[pos].deposit(transaction.amount.unwrap_or(0.0)).await?,
