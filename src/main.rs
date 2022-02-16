@@ -1,7 +1,7 @@
 mod client;
 mod transactions;
 use clap::{App, Arg};
-use transactions::{Transaction, TransactionsDispacter};
+use transactions::{Transaction, TransactionsDispatcher};
 use csv;
 
 fn get_transactions(transactions: &str) -> Vec<Transaction> {
@@ -35,15 +35,16 @@ fn get_params() -> String {
         .get_matches();
     matches.value_of("transactions").unwrap().to_string()
 }
-
-fn main() {
-    let mut td = TransactionsDispacter::new();
+#[tokio::main]
+async fn main() {
+    let mut td = TransactionsDispatcher::new();
     let transactions = get_transactions(&get_params());
-    transactions.iter().for_each(|t| {
-        match td.process_transactions(&t){
-            Err(err) => println!("During processing transaction {:?} error occured:\n {} ",t,err),
+    for i in 0..transactions.len() {
+        println!("i={}",&i);
+        match td.process_transactions(&transactions[i.clone()]).await{
+            Err(err) => println!("During processing transaction {:?} error occured:\n {} ",transactions[i],err),
             _=> ()
         }
-    });
+    }
     td.print_output();
 }

@@ -50,7 +50,7 @@ impl Client {
         Ok(())
     }
 
-    pub fn withdrawal(&mut self,amount: f32) -> Result<(), ClientError> {
+    pub async  fn withdrawal(&mut self,amount: f32) -> Result<(), ClientError> {
         if amount > self.available {
             return Err(ClientError::Other("Withdrawal failed due to insufficient funds".to_string()));
         }
@@ -58,12 +58,12 @@ impl Client {
         self.update_total()
     }
 
-    pub fn deposit(&mut self,amount: f32) -> Result<(), ClientError> {
+    pub async fn deposit(&mut self,amount: f32) -> Result<(), ClientError> {
         self.available += amount;
         self.update_total()
     }
 
-    pub fn dispute(&mut self, transaction: &Transaction) ->Result<(), ClientError> {
+    pub async fn dispute(&mut self, transaction: Transaction) ->Result<(), ClientError> {
         if self.available < transaction.amount.unwrap_or(0.0) {
             return Err(ClientError::Other("Dispute failed due to insufficient funds on account".to_string()));
         }
@@ -72,7 +72,7 @@ impl Client {
         self.update_total()
     }
 
-    pub fn resolve(&mut self, transaction: &Transaction) ->Result<(), ClientError> {
+    pub async fn resolve(&mut self, transaction: Transaction) ->Result<(), ClientError> {
         if self.held < transaction.amount.unwrap_or(0.0) {
             return Err(ClientError::Other("Resolve dispute failed due to insufficient funds on held account".to_string()));
         }
@@ -80,7 +80,7 @@ impl Client {
         self.update_available()
     }
 
-    pub fn chargeback(&mut self, transaction: &Transaction) ->Result<(), ClientError> {
+    pub async fn chargeback(&mut self, transaction: Transaction) ->Result<(), ClientError> {
         if self.held < transaction.amount.unwrap_or(0.0) {
             return Err(ClientError::Other("Chargeback failed due to insufficient funds.".to_string()));
         }
@@ -131,43 +131,43 @@ mod test {
         assert_eq!(c2,c3);
     }
 
-    #[test]
-    fn test_withdrawal() {
+    #[tokio::test]
+    async fn test_withdrawal() {
         let mut c1 = Client::new(None, Some(100.0), Some(20.0), None, None);
-        assert_eq!(c1.withdrawal(80.0),Ok(()));
-        assert_ne!(c1.withdrawal(80.0),Ok(()));
+        assert_eq!(c1.withdrawal(80.0).await,Ok(()));
+        assert_ne!(c1.withdrawal(80.0).await,Ok(()));
         }
 
-    #[test]
-    fn test_deposit() {
+    #[tokio::test]
+    async fn test_deposit() {
         let mut c1 = Client::new(None, Some(100.0), Some(20.0), None, None);
-        assert_eq!(c1.deposit(80.0),Ok(()));
+        assert_eq!(c1.deposit(80.0).await,Ok(()));
         assert_eq!(c1.total,200.0);
         }
 
-    #[test]
-    fn test_resolve() {
+    #[tokio::test]
+    async fn test_resolve() {
         let mut c1 = Client::new(None, Some(100.0), Some(20.0), None, None);
         let t = Transaction::new(TransactionT::Resolve, CLIENT_ID.load(Ordering::Relaxed)as u16, 0, Some(20.0));
-        assert_eq!(c1.resolve(&t),Ok(()));
+        assert_eq!(c1.resolve(t).await,Ok(()));
         assert_eq!(c1.held,0.0);
         assert_eq!(c1.available, 120.0)
     }
 
-    #[test]
-    fn test_dispute() {
+    #[tokio::test]
+    async fn test_dispute() {
         let mut c1 = Client::new(None, Some(100.0), Some(20.0), None, None);
         let t = Transaction::new(TransactionT::Dispute,CLIENT_ID.load(Ordering::Relaxed) as u16,0, Some(20.0));
-        assert_eq!(c1.dispute(&t),Ok(()));
+        assert_eq!(c1.dispute(t).await,Ok(()));
         assert_eq!(c1.held,40.0);
         assert_eq!(c1.available, 80.0);
         assert_eq!(c1.total, 120.0);
     }
-    #[test]
-    fn test_chargeback() {
+    #[tokio::test]
+    async fn test_chargeback() {
         let mut c1 = Client::new(None, Some(100.0), Some(20.0), None, None);
         let t = Transaction::new(TransactionT::Chargeback,CLIENT_ID.load(Ordering::Relaxed) as u16,0, Some(20.0));
-        assert_eq!(c1.chargeback(&t),Ok(()));
+        assert_eq!(c1.chargeback(t).await,Ok(()));
         assert_eq!(c1.held,0.0);
         assert_eq!(c1.total, 100.0);
         assert_eq!(c1.locked, true);

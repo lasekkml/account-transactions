@@ -1,12 +1,6 @@
 use super::client::{Client,ClientError};
 use serde::{Deserialize, Serialize,Deserializer};
 
-///  todo:
-/// async
-/// veryfication tests
-/// benchmark
-/// final review
-
 #[derive(Serialize, Debug, PartialEq, Clone)]
 pub enum TransactionT {
     Deposit,
@@ -38,10 +32,10 @@ pub struct Transaction {
     pub amount: Option<f32>,
 }
 
-pub struct TransactionsDispacter{
+pub struct TransactionsDispatcher{
     disputes: Vec<Transaction>,
     history: Vec<Transaction>,
-    clients: Vec<Client>,//maybe hashmap?
+    clients: Vec<Client>,
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -60,9 +54,9 @@ fn get_transaction_index(vec: &Vec<Transaction>,tx: u32) -> Result<usize, Error>
 }
 
 
-impl TransactionsDispacter {
-    pub fn new() -> TransactionsDispacter{
-        TransactionsDispacter{disputes: vec![],history: vec![], clients: vec![]}
+impl TransactionsDispatcher {
+    pub fn new() -> TransactionsDispatcher{
+        TransactionsDispatcher{disputes: vec![],history: vec![], clients: vec![]}
     }
 
     fn get_client_index(&mut self,id: u16) -> usize {
@@ -84,39 +78,36 @@ impl TransactionsDispacter {
     }
 
 
-    pub fn process_transactions(&mut self, transaction: &Transaction) -> Result<(), Error> {
+    pub async fn process_transactions(&mut self, transaction: &Transaction) -> Result<(), Error> {
         println!("processing: {:?}",&transaction);
         let pos = self.get_client_index(transaction.client);
+        self.history.push(transaction.clone());
         match transaction.tt{
-            TransactionT::Deposit => self.clients[pos].deposit(transaction.amount.unwrap_or(0.0))?,
-            TransactionT::Withdrawal => self.clients[pos].withdrawal(transaction.amount.unwrap_or(0.0))?,
+            TransactionT::Deposit => self.clients[pos].deposit(transaction.amount.unwrap_or(0.0)).await?,
+            TransactionT::Withdrawal => self.clients[pos].withdrawal(transaction.amount.unwrap_or(0.0)).await?,
             TransactionT::Dispute => {
                 let h_pos = get_transaction_index(&self.history,transaction.tx)?;
                 let mut t = self.history[h_pos].clone();
                 t.tt = TransactionT::Dispute;
-                self.clients[pos].dispute(&t)?;
-                self.disputes.push(t);
+                self.disputes.push(t.clone());
+                self.clients[pos].dispute(t).await?;
             },
             TransactionT::Resolve => {
                 let d_pos = get_transaction_index(&self.disputes,transaction.tx)?;
-                let mut t = self.disputes.swap_remove(d_pos);//?
+                let mut t = self.disputes.swap_remove(d_pos);
                 t.tt = TransactionT::Resolve;
-                self.clients[pos].resolve(&t)?;
+                self.clients[pos].resolve(t).await?;
             },
             TransactionT::Chargeback => {
                 let d_pos = get_transaction_index(&self.disputes,transaction.tx)?;
-                let mut t = self.disputes.swap_remove(d_pos);//?
+                let mut t = self.disputes.swap_remove(d_pos);
                 t.tt = TransactionT::Chargeback;
-                self.clients[pos].chargeback(&transaction)?;
+                self.clients[pos].chargeback(transaction.clone()).await?;
             },
         };
-        self.history.push(transaction.clone());
         Ok(())
     }
 }
-
-//async  //box?
-
 
 #[cfg(test)]
 mod test {
@@ -127,23 +118,16 @@ mod test {
         }
     }
 
-    #[test]
-    fn test_process_transactions(){
+    #[tokio::test]
+    async fn test_process_transactions(){
         let ts = vec![Transaction::new(TransactionT::Deposit,1,0, Some(20.0)), Transaction::new(TransactionT::Withdrawal,1,0, Some(20.0))];
-        let mut td = TransactionsDispacter::new();
-        ts.iter().for_each(|t| td.process_transactions(t).unwrap());
+        let mut td = TransactionsDispatcher::new();
+        for i in 0..ts.len() {
+            td.process_transactions(&ts[i]).await.unwrap();
+        }
         assert_eq!(td.clients.len(),1);
         let c = td.clients.pop().unwrap();
         assert_eq!(c.total,0.0);
-    }
-
-    #[test]
-    fn complex_test(){
-    //     let transactions = vec![
-    //         Transaction::new(TransactionT::Deposit,1,1,Some(0.3221)),
-    //         Transaction::new(TransactionT::Deposit,1,2,Some(0.3221)),
-    //     ]
-
     }
 
 
