@@ -21,12 +21,14 @@ pub struct Client {
      /// Whether the account is locked. An account is locked if a (charge back occurs)??
     pub locked: bool,
 }
-
+// LCOV_EXCL_START
 #[derive(thiserror::Error, Debug, PartialEq)]
 pub enum ClientError {
     #[error("Client operation failure {0}")]
     Other(String),
 }
+
+// LCOV_EXCL_STOP
 impl Client {
     pub fn new(id: Option<u16>, available: Option<f32>, held: Option<f32>, total: Option<f32>, locked: Option<bool> ) -> Client {
         let id = id.unwrap_or((get_id()) as u16);

@@ -3,7 +3,7 @@ mod transactions;
 use clap::{App, Arg};
 use transactions::{Transaction, TransactionsDispatcher};
 use csv;
-
+// LCOV_EXCL_START
 fn get_transactions(transactions: &str) -> Vec<Transaction> {
     let mut data = csv::Reader::from_path(transactions).unwrap();
     let data = data.deserialize::<Transaction>();
@@ -35,6 +35,7 @@ fn get_params() -> String {
         .get_matches();
     matches.value_of("transactions").unwrap().to_string()
 }
+
 #[tokio::main]
 async fn main() {
     let mut td = TransactionsDispatcher::new();
@@ -48,3 +49,5 @@ async fn main() {
     }
     td.print_output();
 }
+
+// LCOV_EXCL_STOP
