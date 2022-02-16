@@ -34,7 +34,7 @@ fn transaction_deserializer<'de,D>(deserializer: D) -> Result<TransactionT, <D a
                "withdrawal" => Ok(TransactionT::Withdrawal),
                "dispute" => Ok(TransactionT::Dispute),
                "resolve" => Ok(TransactionT::Resolve),
-               "cargeback" => Ok(TransactionT::Chargeback),
+               "chargeback" => Ok(TransactionT::Chargeback),
                _=> Err(serde::de::Error::custom("transaction type incorrect")),
            }
         }

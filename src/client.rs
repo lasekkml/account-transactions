@@ -52,7 +52,7 @@ impl Client {
         Ok(())
     }
 
-    pub async  fn withdrawal(&mut self,amount: f32) -> Result<(), ClientError> {
+    pub async fn withdrawal(&mut self,amount: f32) -> Result<(), ClientError> {
         if amount > self.available {
             return Err(ClientError::Other("Withdrawal failed due to insufficient funds".to_string()));
         }
