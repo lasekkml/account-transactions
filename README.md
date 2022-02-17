@@ -6,9 +6,9 @@ There is no mechanism to unfreeze charged-back client.
 ## Usage:
 The program requires a file with transactions as input in csv format such as:
 
-            type,	client, tx,	amount
-         deposit,	     1,	 1,	   1.0
-      withdrawal,        2,  2,  0.234    
+            type,  client,  tx,  amount
+         deposit,       1,   1,     1.0
+      withdrawal,       2,   2,   0.234    
 
 
 
