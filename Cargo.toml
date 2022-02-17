@@ -2,6 +2,7 @@
 name = "account-transactions"
 version = "1.0.0"
 edition = "2021"
+authors = ["Kamil Łasek"]
 
 [dependencies]
 csv = "1.1"

@@ -15,16 +15,16 @@ fn get_transactions(transactions: &str) -> Vec<Transaction> {
 }
 
 fn get_params() -> String {
-    let matches = App::new("Program writted for interview purpose as an exercise")
+    let matches = App::new("Program realizes simple account transactions: deposit, withdrawal, dispute, resolve and charge-back. It has been prepared solely for training purposes.")
         .author("Kamil Łasek")
         .version("1.0.0")
         .usage(
-            "Transactions application 
-    Reqires file with transaction in csv format such as:
+            "The program requires a file with transactions as input in csv format such as:
 
-    client, available, held, total, locked
-         1,       1.5,  0.0,   1.5, false
-         2,       2.0,  0.0,   2.0, false"
+            type,       client, tx,	amount
+            deposit,        1,  1,	   1.0
+            withdrawal,     2,  2,       0.234
+            "
         )
         .arg(
             Arg::with_name("transactions")
