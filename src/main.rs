@@ -14,7 +14,9 @@ fn get_transactions(transactions: &str) -> Vec<Transaction> {
     vec
 }
 
-fn get_params() -> String {
+
+#[tokio::main]
+async fn main() {
     let matches = App::new("Program realizes simple account transactions: deposit, withdrawal, dispute, resolve and charge-back. It has been prepared solely for training purposes.")
         .author("Kamil Łasek")
         .version("1.0.0")
@@ -33,13 +35,9 @@ fn get_params() -> String {
                 .help("scv file contains transactions")
         )
         .get_matches();
-    matches.value_of("transactions").unwrap().to_string()
-}
 
-#[tokio::main]
-async fn main() {
+    let transactions = get_transactions(&matches.value_of("transactions").unwrap());
     let mut td = TransactionsDispatcher::new();
-    let transactions = get_transactions(&get_params());
     for i in 0..transactions.len() {
         match td.process_transactions(&transactions[i.clone()]).await{
             Err(err) => println!("During processing transaction {:?} error occured:\n {} ",transactions[i],err),
