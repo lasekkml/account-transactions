@@ -115,20 +115,20 @@ impl TransactionsDispatcher {
                 let h_pos = get_transaction_index(&self.history,transaction.tx)?;
                 let mut t = self.history[h_pos].clone();
                 t.tt = TransactionT::Dispute;
-                self.disputes.push(t.clone());
-                self.clients[pos].dispute(t).await?;
+                self.clients[pos].dispute(&t).await?;
+                self.disputes.push(t);
             },
             TransactionT::Resolve => {
                 let d_pos = get_transaction_index(&self.disputes,transaction.tx)?;
                 let mut t = self.disputes.swap_remove(d_pos);
                 t.tt = TransactionT::Resolve;
-                self.clients[pos].resolve(t).await?;
+                self.clients[pos].resolve(&t).await?;
             },
             TransactionT::Chargeback => {
                 let d_pos = get_transaction_index(&self.disputes,transaction.tx)?;
                 let mut transaction = self.disputes.swap_remove(d_pos);
                 transaction.tt = TransactionT::Chargeback;
-                self.clients[pos].chargeback(transaction.clone()).await?;
+                self.clients[pos].chargeback(&transaction).await?;
             },
         };
         Ok(())
