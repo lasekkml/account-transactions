@@ -13,7 +13,7 @@ pub async fn worker(receiver: Receiver<Transaction>) {
             },
             Ok(t) => t,
         };
-        match td.process_transactions(&transaction).await{
+        match td.process_transactions(&transaction){
             Err(err) => println!("During processing transaction {:?} error occured:\n {} ",transaction,err),
             _=> (),
         };
@@ -26,7 +26,6 @@ mod test {
     use super::*;
     use crate::transactions::TransactionT;
     use std::sync::mpsc::channel;
-
     #[tokio::test]
     async fn test_worker(){
         let ts = vec![Transaction::new(TransactionT::Deposit,1,0, Some(20.0)),
@@ -41,7 +40,9 @@ mod test {
         let worker = tokio::spawn(async move {
             worker(receiver).await;
         });
-        ts.iter().for_each(|t| sender.send(t.clone()).unwrap());
+        ts.iter().for_each(|t| {
+            sender.send(t.clone()).unwrap();
+        });
         drop(sender);
         assert_eq!(worker.await.unwrap(),());
     }

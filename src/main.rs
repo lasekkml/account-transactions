@@ -10,7 +10,13 @@ use csv;
 
 // LCOV_EXCL_START
 fn get_transactions(transactions: &str) -> Vec<Transaction> {
-    let mut data = csv::Reader::from_path(transactions).unwrap();
+    let mut data = match csv::Reader::from_path(transactions){
+        Ok(d) => d,
+        Err(e) => {
+            println!("{}",e);
+            std::process::exit(1);
+        },
+    };
     let data = data.deserialize::<Transaction>();
     let mut vec = vec![];
     data.for_each(|t| {

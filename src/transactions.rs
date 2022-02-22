@@ -102,33 +102,33 @@ impl TransactionsDispatcher {
 // LCOV_EXCL_STOP
 
 /// Processing transaction with client account
-    pub async fn process_transactions(&mut self, transaction: &Transaction) -> Result<(), Error> {
+    pub fn process_transactions(&mut self, transaction: &Transaction) -> Result<(), Error> {
         let pos = self.get_client_index(transaction.client);
         if self.clients[pos].locked {
             return Err(Error::Other("Client is already locked".to_string()));
         }
         self.history.push(transaction.clone());
         match transaction.tt{
-            TransactionT::Deposit => self.clients[pos].deposit(transaction.amount.unwrap_or(0.0)).await?,
-            TransactionT::Withdrawal => self.clients[pos].withdrawal(transaction.amount.unwrap_or(0.0)).await?,
+            TransactionT::Deposit => self.clients[pos].deposit(transaction.amount.unwrap_or(0.0))?,
+            TransactionT::Withdrawal => self.clients[pos].withdrawal(transaction.amount.unwrap_or(0.0))?,
             TransactionT::Dispute => {
                 let h_pos = get_transaction_index(&self.history,transaction.tx)?;
                 let mut t = self.history[h_pos].clone();
                 t.tt = TransactionT::Dispute;
-                self.clients[pos].dispute(&t).await?;
+                self.clients[pos].dispute(&t)?;
                 self.disputes.push(t);
             },
             TransactionT::Resolve => {
                 let d_pos = get_transaction_index(&self.disputes,transaction.tx)?;
                 let mut t = self.disputes.swap_remove(d_pos);
                 t.tt = TransactionT::Resolve;
-                self.clients[pos].resolve(&t).await?;
+                self.clients[pos].resolve(&t)?;
             },
             TransactionT::Chargeback => {
                 let d_pos = get_transaction_index(&self.disputes,transaction.tx)?;
                 let mut transaction = self.disputes.swap_remove(d_pos);
                 transaction.tt = TransactionT::Chargeback;
-                self.clients[pos].chargeback(&transaction).await?;
+                self.clients[pos].chargeback(&transaction)?;
             },
         };
         Ok(())
@@ -144,8 +144,8 @@ mod test {
         }
     }
 
-    #[tokio::test]
-    async fn test_process_transactions(){
+    #[test]
+    fn test_process_transactions(){
         let ts = vec![Transaction::new(TransactionT::Deposit,1,0, Some(20.0)),
         Transaction::new(TransactionT::Dispute,1,0,None), 
         Transaction::new(TransactionT::Resolve,1,0,None), 
@@ -155,7 +155,7 @@ mod test {
         Transaction::new(TransactionT::Chargeback,1,2,None)];
         let mut td = TransactionsDispatcher::new();
         for i in 0..ts.len() {
-            td.process_transactions(&ts[i]).await.unwrap();
+            td.process_transactions(&ts[i]).unwrap();
         }
         assert_eq!(td.clients.len(),1);
         let c = td.clients.pop().unwrap();
