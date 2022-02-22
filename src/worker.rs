@@ -7,6 +7,7 @@ pub async fn worker(receiver: Receiver<Transaction>) {
     loop {
         let transaction = match receiver.recv() {
             Err(_) => {
+                println!("finnish processing transactions");
                 td.print_output();
                 break;
             },
