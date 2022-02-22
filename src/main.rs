@@ -1,8 +1,13 @@
 mod client;
 mod transactions;
+mod worker;
+use std::sync::mpsc::channel;
+
 use clap::{App, Arg};
-use transactions::{Transaction, TransactionsDispatcher};
+use transactions::Transaction;
+use worker::worker;
 use csv;
+
 // LCOV_EXCL_START
 fn get_transactions(transactions: &str) -> Vec<Transaction> {
     let mut data = csv::Reader::from_path(transactions).unwrap();
@@ -37,14 +42,12 @@ async fn main() {
         .get_matches();
 
     let transactions = get_transactions(&matches.value_of("transactions").unwrap());
-    let mut td = TransactionsDispatcher::new();
-    for i in 0..transactions.len() {
-        match td.process_transactions(&transactions[i.clone()]).await{
-            Err(err) => println!("During processing transaction {:?} error occured:\n {} ",transactions[i],err),
-            _=> ()
-        }
-    }
-    td.print_output();
+    let (sender,receiver) = channel();
+    tokio::spawn(async move {
+        worker(receiver).await;
+    });
+    transactions.iter().for_each(|t| sender.send(t.clone()).unwrap());
+
 }
 
 // LCOV_EXCL_STOP

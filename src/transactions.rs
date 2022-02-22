@@ -1,6 +1,7 @@
 use super::client::{Client,ClientError};
 use serde::{Deserialize, Serialize,Deserializer};
 
+
 #[derive(Serialize, Debug, PartialEq, Clone)]
 pub enum TransactionT {
     /// A deposit is a credit to the client's asset account, meaning it should increase the available and
@@ -73,7 +74,6 @@ fn get_transaction_index(vec: &Vec<Transaction>,tx: u32) -> Result<usize, Error>
         None => Err(Error::Other(format!("Transaction with id {} not found",tx)))
     }
 }
-
 
 impl TransactionsDispatcher {
     pub fn new() -> TransactionsDispatcher{
