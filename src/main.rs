@@ -42,13 +42,13 @@ async fn main() {
         .get_matches();
 
     let transactions = get_transactions(&matches.value_of("transactions").unwrap());
-    let (sender,receiver) = channel();{
+    let (sender,receiver) = channel();
     let worker = tokio::spawn(async move {
         worker(receiver).await;
     });
     transactions.iter().for_each(|t| sender.send(t.clone()).unwrap());
     drop(sender);
-    worker.await.unwrap();}
+    worker.await.unwrap();
 
 
 
