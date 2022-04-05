@@ -1,4 +1,3 @@
-// use std::sync::Arc;
 use super::Transaction;
 use serde::Serialize;
 use anyhow::Result;
